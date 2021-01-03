@@ -1,20 +1,25 @@
-% replace calendar year
+% calendar year
 \newcommand{\calYear}{2021}
 % if each week is to have 7 tracking circles to fill in
+% if no, just filled with more notes space
 \newcommand{\trackers}{yes}
 
 \documentclass{scrartcl}
 \pagestyle{empty}
 
+% made to fit Notability on iPad Air
 \usepackage[paperwidth=11in,paperheight=7in]{geometry}
+
 \usepackage[hidelinks]{hyperref}
 \usepackage{tikz}
 \usetikzlibrary{positioning, calendar, shapes, calc}
 \usepackage{ifthen}
 \usepackage[calc]{datetime2}
+
 \newcount\CurrDateJul
 \newcount\LastDateJul
 
+% ifdate to match two conditions
 % from https://tex.stackexchange.com/questions/140948/tikz-calendar-and-conditional-tests
 \makeatletter
 \def\pgfcalendar@matchesfalse{\global\let\ifpgfcalendar@matches\iffalse}
@@ -27,6 +32,7 @@
     \ifpgfcalendar@matches\pgfcalendarmatchestrue\pgfcalendar@matchesfalse\fi}}
 \makeatother
 
+% calendar starts on Monday of first week of year, possibly in December
 % from https://tex.stackexchange.com/questions/469059/how-to-get-the-monday-of-a-years-first-week
 \newcount\FirstDayCount
 \newcount\YearCount
@@ -53,6 +59,8 @@
     \fi
   }
 
+% month labels for weekly calendars
+% show up on Monday and first of the month
 \tikzstyle{mymonth label}=[
   execute before day scope={
   \ifdate{Monday}{
@@ -72,6 +80,7 @@
   }
 ]
 
+% day labels for monthly calendars
 % based on https://tex.stackexchange.com/questions/10186/weekday-captions-with-the-tikz-library-calendar
 % can set options with day heading =
 \makeatletter%
@@ -87,10 +96,11 @@
         \pgftransformxshift{\pgf@xa}%
         \pgftransformyshift{1cm}%
         \node[every day,day heading]{\l};%
-      } 
+      }
     }{}%
   }%
 ]
+% day labels for yearly calendar
 \tikzstyle{dayyear letter headings}=[
     execute before day scope={ \ifdate{day of month=1}{%
       \pgfmathsetlength{\pgf@ya}{\tikz@lib@cal@yshift}%
@@ -101,17 +111,20 @@
         \pgftransformxshift{\pgf@xa}%
         \pgftransformyshift{\pgf@ya}%
         \node[every day,day heading]{\textit{\l}};%
-      } 
+      }
     }{}%
   }%
 ]
 \makeatother%
 
+% make the monthly calendar
 \newcommand{\monthcal}[1]{%
     \newgeometry{left=.25in, top=0in, right=.25in, bottom=0in}
     \begin{tikzpicture}
+    % 1x1 matrix just for positioning
     \matrix [anchor=month\DTMfetchmonth{#1}-\calYear-\DTMfetchmonth{#1}-01.center] at (0,0)
-    {\calendar (month\DTMfetchmonth{#1}) [
+    {
+    \calendar (month\DTMfetchmonth{#1}) [
         dates=\calYear-\DTMfetchmonth{#1}-01 to \calYear-\DTMfetchmonth{#1}-last,
         week list,
         month yshift = 0em,
@@ -119,7 +132,9 @@
         day xshift = 7.5em,
         day yshift = 6.5em,
         execute at end day scope={
+            % box around day
             \draw[gray, thin] ($(month\DTMfetchmonth{#1}-\%y0-\%m0-\%d0.north east)+(-2.735,-2.35)$) rectangle ($(month\DTMfetchmonth{#1}-\%y0-\%m0-\%d0.north east)+(.15,.15)$);
+            % dot paper for notes
             \ifdate{day of month=1}{
                 \foreach \x in {3.5,4,...,8}
                 \foreach \y in {-14.5,-14,...,1}
@@ -134,9 +149,11 @@
             }{} % end if first day of month
         }, % end end day scope
         day text={\hyperlink{myweek-\%y0-\%m0-\%d0}{\hypertarget{\pgfcalendarsuggestedname}{\%d-}}}
-    ]   
-    if (weekend) [gray];\\};
+    ]
+    if (weekend) [gray];\\
+    };
     \end{tikzpicture}
+    \restoregeometry
 }
 
 \begin{document}
@@ -144,19 +161,20 @@
 \GetMondaysDate{\calYear}
 \DTMsavedate{FirstDate}{\MondaysDateIs}
 
+% blank page for yearly notes, goals
 \begin{center}
     \hypertarget{goals}{\hyperlink{year}{\Huge\sffamily\bfseries \calYear}}
 \end{center}
-\newpage
 
+% yearly calendar
+\newpage
 \newgeometry{margin=.5in, bottom=0in}
 \hypertarget{year}{}
-
 \begin{center}
 \begin{tikzpicture}[
     every calendar/.style={
         week list,
-        month label above right, 
+        month label above right,
         dayyear letter headings,
         day xshift = 2em,
         day yshift = 1.5em,
@@ -178,25 +196,25 @@
     };
 \end{tikzpicture}
 \end{center}
-
 \restoregeometry
 
+% iterate over all the weeks in the year
 \newpage
-
 \foreach \days in {0, 7, ..., 364}{
 
+    % first and last day of week
     \DTMsaveddateoffsettojulianday{FirstDate}{\days}{\CurrDateJul}
     \DTMsavejulianday{CurrDate}{\CurrDateJul}
     \DTMsaveddateoffsettojulianday{CurrDate}{6}{\LastDateJul}
     \DTMsavejulianday{LastDate}{\LastDateJul}
 
+    % if a new month starts this week, first put monthly calendar
     \DTMifdate{LastDate}{
         between=\DTMfetchyear{LastDate}-\DTMfetchmonth{LastDate}-01 and \DTMfetchyear{LastDate}-\DTMfetchmonth{LastDate}-07
     }{\monthcal{LastDate}}{}
 
-    \restoregeometry
+    % make weekly calendar
     \newgeometry{left=.25in, top =.35in, bottom=0in, right=0in}
-
     \begin{tikzpicture}
     \tikzstyle{every day}=[anchor=base west]
 
@@ -204,19 +222,20 @@
         day list downward,
         mymonth label,
         month text={{\sffamily\bfseries \Huge \%mt}},
-        day text={\ifdate{Saturday}{\%d=/}{\hypertarget{\pgfcalendarsuggestedname}{\hyperlink{month\DTMfetchmonth{CurrDate}-\%y0-\%m0-\%d0}{\%d=}}}},
+        day text={\ifdate{Saturday}{\hypertarget{\pgfcalendarsuggestedname}{\%d-/}}{\hypertarget{\pgfcalendarsuggestedname}{\hyperlink{month\DTMfetchmonth{CurrDate}-\%y0-\%m0-\%d0}{\%d-}}}},
         month yshift = 0pt,
         day yshift = 6cm,
         execute at begin day scope=
-        {
+        { % move Thurs-Sun to second column
             \ifdate{Thursday}{\pgftransformyshift{18cm}\pgftransformxshift{8cm}}{},
             \ifdate{Friday}{\pgftransformyshift{18cm}\pgftransformxshift{8cm}}{},
             \ifdate{Saturday}{\pgftransformyshift{18cm}\pgftransformxshift{8cm}}{},
-            \ifdate{Sunday}{\pgftransformyshift{24cm}\pgftransformxshift{8.65cm}}{}
+            \ifdate{Sunday}{\pgftransformyshift{24cm}\pgftransformxshift{8.6cm}}{}
         },
         dates=\DTMusedate{CurrDate} to \DTMusedate{LastDate}, at={(1,22)}
     ];
 
+    % dot paper for notes
     \foreach \x in {13.5, 14, ..., 21}
     \foreach \y in {-5, -4.5, ..., 7}
     {
@@ -226,9 +245,10 @@
     {
         \fill[white] (\x+5,6.5+15.5) circle (.5pt);
     }
-    
+
     \node at (17.25+5,6.5+15.5) {{\sffamily\bfseries \Huge Notes}};
-    
+
+    % circle trackers for weekly tracking
     \ifthenelse{\equal{\trackers}{yes}}{%
         \foreach \x in {14.75, 15.75, 19, 20}
         {
@@ -239,11 +259,11 @@
         {
             \node[draw, circle, minimum size=.99cm] at (\x+5,-7.35+15.5) {};
         }
-        \foreach \y/\l in {-6.25/P, -6.6/R, -6.95/O, -7.30/G, -7.65/R, -8/E, -8.35/S, -8.7/S} 
+        \foreach \y/\l in {-6.25/P, -6.6/R, -6.95/O, -7.30/G, -7.65/R, -8/E, -8.35/S, -8.7/S}
         {
             \node at (17.375+5,\y+.07+15.5) {\hyperlink{goals}{\sffamily\bfseries \l}};
         }
-    }{% if no trackers
+    }{% if no trackers continue dots
         \foreach \x in {13.5, 14, ..., 21}
         \foreach \y in {-9, -8.5, ..., -5.5}
         {
