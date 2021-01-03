@@ -178,6 +178,7 @@
         dayyear letter headings,
         day xshift = 2em,
         day yshift = 1.5em,
+        day text={\hyperlink{myweek-\%y0-\%m0-\%d0}{\%d-}}
         month text={\hyperlink{month\%m0-\calYear-\%m0-01}{\sffamily\bfseries\%mt}}
     }]
     \matrix[column sep=1cm, row sep=1cm] {
@@ -221,7 +222,7 @@
     \calendar(myweek)[
         day list downward,
         mymonth label,
-        month text={{\sffamily\bfseries \Huge \%mt}},
+        month text={\hyperlink{month\DTMfetchmonth{CurrDate}-\%y0-\%m0-\%d0}{{\sffamily\bfseries \Huge \%mt}}},
         day text={\ifdate{Saturday}{\hypertarget{\pgfcalendarsuggestedname}{\%d-/}}{\hypertarget{\pgfcalendarsuggestedname}{\hyperlink{month\DTMfetchmonth{CurrDate}-\%y0-\%m0-\%d0}{\%d-}}}},
         month yshift = 0pt,
         day yshift = 6cm,
